@@ -1,0 +1,544 @@
+<project default="help" basedir=".">
+
+    <property name = "common.lib.dir"              location = "./lib"/>
+    <property name = "target"                      location = "./target"/>
+    <property name = "work"                        location = "./work"/>
+    <property name = "tools"                       location = ".builder/tools"/>
+
+    <property file = "${work}/build.properties"/>
+
+    <property name = "findbugs.home"               location = "${tools}/findbugs"/>
+    <property name = "clover.home"                 location = "${tools}/clover-ant"/>
+    <property name = "junit.home"                  location = "${tools}/junit"/>
+    <property name = "pmd.home"                    location = "${tools}/pmd"/>
+    <property name = "ant-contrib.home"            location = "${tools}/ant-contrib"/>
+    <property name = "simian.home"                 location = "${tools}/simian"/>
+    <property name = "sonar.home"                  location = "${tools}/sonar"/>
+
+    <property name = "build.production.src"        location = "${work}/src"/>
+    <property name = "build.test.java.src"         location = "${work}/test/src"/>
+    <property name = "build.test.java.data"        location = "${work}/test/data"/>
+    <property name = "build.webcontent.path"       location = "${work}/WebContent"/>
+    <property name = "build.webcontent.path.lib"   location = "${build.webcontent.path}/WEB-INF/lib"/>
+
+    <!-- Classes folder -->
+    <property name = "build.classes"               location = "${target}/classes"/>
+    <property name = "build.production.classes"    location = "${build.classes}/production"/>
+    <property name = "build.test.classes"          location = "${build.classes}/test"/>
+    <property name = "build.test.tmp"              location = "${target}/tmp"/>
+    <property name = "build.instrument.classes"    location = "${build.classes}/instrument"/>
+
+    <!-- Top data folder -->
+    <property name = "data"                        location = "${target}/data"/>
+    <property name = "reports.ut.data"             location = "${data}/test"/>
+    <property name = "reports.ut.java.data"        location = "${reports.ut.data}/java"/>
+    <property name = "reports.ut.javascript.data"  location = "${reports.ut.data}/javascript"/>
+
+    <property name = "reports.coverage.data"                       location = "${data}/coverage"/>
+    <property name = "reports.coverage.java.data"                  location = "${reports.coverage.data}/java"/>
+    <property name = "reports.coverage.java.file.name"             location = "${reports.coverage.java.data}/coverage.xml"/>
+    <property name = "reports.coverage.javascript.data"            location = "${reports.coverage.data}/javascript"/>
+    <property name = "reports.coverage.javascript.file.name"       location = "${reports.coverage.javascript.data}/lcov.info"/>
+
+    <property name = "reports.findbugs.data"       location = "${data}/findbugs"/>
+    <property name = "reports.pmd.data"            location = "${data}/pmd"/>
+    <property name = "reports.pmd.config"          location = "${pmd.home}/etc/xslt"/>
+    <property name = "report.pmd.file.name"           value = "report_pmd"/>
+    <property name = "reports.simian.data"         location = "${data}/simian"/>
+    <property name = "reports.simian.file.name"       value = "simian"/>
+
+    <!-- Artifacts folder -->
+    <property name = "artifact.path"               location = "${target}/artifact"/>
+    <property name = "artifact.package.path"       location = "${artifact.path}/package"/>
+    <property name = "artifact.flat.path"          location = "${artifact.path}/flat"/>
+
+    <!-- Top report folder -->
+    <property name = "reports"                      location = "${target}/reports"/>
+    <property name = "reports.ut.report"            location = "${target}/reports/test"/>
+    <property name = "reports.ut.java.report"       location = "${reports.ut.report}/java"/>
+    <property name = "reports.ut.javascript.report" location = "${reports.ut.report}/javascript"/>
+
+    <property name = "reports.coverage.report"            location = "${reports}/coverage"/>
+    <property name = "reports.coverage.java.report"       location = "${reports}/coverage/java"/>
+    <property name = "reports.coverage.javascript.report" location = "${reports}/coverage/javascript"/>
+
+    <property name = "reports.findbugs.report"      location = "${reports}/findbugs"/>
+    <property name = "reports.pmd.report"           location = "${reports}/pmd"/>
+    <property name = "reports.simian.report"        location = "${reports}/simian"/>
+
+    <!-- Docs folder -->
+    <property name = "docs"                        location = "${target}/docs"/>
+    <property name = "docs.javadoc"                location = "${docs}/javadoc"/>
+
+
+    <!-- Manifest.yml file -->
+    <property name = "manifest.file.path"          location = "${work}"/>
+    <property name = "manifest.file.name"             value = "manifest.yml"/>
+
+    <!-- Liberty scripts -->
+    <property name = "application.server.start.cmd"   value = "${application.server.install.path}/bin/startup.sh"/>
+    <property name = "application.server.stop.cmd"    value = "${application.server.install.path}/bin/catalina.sh"/>
+    <property name = "application.server.status.cmd"  value = "${application.server.install.path}/bin/catalina.sh"/>
+
+    <!-- Define the Sonar project properties -->
+    <property name="sonar.projectVersion" value="${assemble.package.version}"/>
+    <property name="sonar.sources" value="${work}"/>
+    <property name="sonar.binaries" value="${build.production.classes}" />
+    <property name="sonar.projectBaseDir" value="${work}"/>
+    <property name="sonar.sourceEncoding" value="UTF-8" />
+    <property name="sonar.clover.reportPath" value="${reports.coverage.java.file.name}"/>
+    <property name="sonar.javascript.lcov.reportPath" value="${reports.coverage.javascript.file.name}"/>
+
+    <path id="sonar.classpath">
+        <fileset dir="${sonar.home}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="simian.classpath">
+        <fileset dir="${simian.home}">
+            <include name="bin/*.jar" />
+        </fileset>
+    </path>
+
+    <path id="clover.classpath">
+        <fileset dir="${clover.home}">
+            <include name="lib/*.jar" />
+        </fileset>
+    </path>
+
+    <path id="common.classpath">
+        <fileset dir="${common.lib.dir}">
+            <include name="*.jar"/>
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+
+    <path id="junit.classpath">
+        <fileset dir="${junit.home}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="findbugs.classpath">
+        <fileset dir="${findbugs.home}">
+            <include name="lib/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="pmd.classpath">
+        <fileset dir="${pmd.home}">
+            <include name="lib/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="ant-contrib.classpath">
+        <fileset dir="${ant-contrib.home}">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${ant-contrib.home}">
+            <include name="lib/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="runtime.classpath">
+        <fileset dir="${build.webcontent.path.lib}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="production.compile.classpath">
+        <path refid = "common.classpath"/>
+        <path refid = "runtime.classpath"/>
+        <path refid = "clover.classpath"/>
+    </path>
+
+    <path id="production.run.classpath">
+        <path refid = "common.classpath"/>
+        <path refid = "runtime.classpath"/>
+        <path refid = "clover.classpath"/>
+    </path>
+
+    <path id="test.compile.classpath">
+        <pathelement location = "${build.production.classes}"/>
+        <path refid = "common.classpath"/>
+        <path refid = "junit.classpath"/>
+        <path refid = "runtime.classpath"/>
+        <path refid = "clover.classpath"/>
+    </path>
+
+    <path id="test.run.classpath">
+        <pathelement location = "${build.instrument.classes}"/>
+        <pathelement location = "${build.test.classes}"/>
+        <pathelement location = "${build.production.classes}"/>
+        <path           refid = "junit.classpath"/>
+        <path           refid = "common.classpath"/>
+        <path           refid = "runtime.classpath"/>
+        <path           refid = "clover.classpath"/>
+    </path>
+
+    <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml" classpathref="sonar.classpath"/>
+    <taskdef resource="simiantask.properties" classpathref="simian.classpath"/>
+    <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpathref="findbugs.classpath"/>
+    <taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="pmd.classpath"/>
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="ant-contrib.classpath"/>
+    <taskdef resource="cloverlib.xml" classpathref="clover.classpath"/>
+    <property environment = "env"/>
+    <clover-env/>
+
+    <target name="about" description="Show help content">
+        <echo>Author: Xiangqian.Liu&lt;smartlitchi@gmail.com&gt;</echo>
+        <echo>Copyright 2008 - 2013 Liu Xiangqian</echo>
+        <echo>License: The MIT License</echo>
+    </target>
+
+    <target name="init">
+        <mkdir dir="${build.production.classes}"/>
+        <mkdir dir="${build.instrument.classes}"/>
+
+        <mkdir dir="${reports.coverage.data}"/>
+        <mkdir dir="${reports.coverage.java.data}"/>
+        <mkdir dir="${reports.coverage.javascript.data}"/>
+        <mkdir dir="${reports.coverage.java.report}"/>
+        <mkdir dir="${reports.coverage.javascript.report}"/>
+
+        <mkdir dir="${build.test.classes}"/>
+        <mkdir dir="${build.test.tmp}"/>
+
+        <mkdir dir="${reports.ut.data}"/>
+        <mkdir dir="${reports.ut.java.data}"/>
+        <mkdir dir="${reports.ut.javascript.data}"/>
+        <mkdir dir="${reports.ut.report}"/>
+        <mkdir dir="${reports.ut.java.report}"/>
+        <mkdir dir="${reports.ut.javascript.report}"/>
+
+        <mkdir dir="${reports.findbugs.report}"/>
+        <mkdir dir="${reports.pmd.data}"/>
+        <mkdir dir="${reports.pmd.report}"/>
+        <mkdir dir="${reports.simian.data}"/>
+        <mkdir dir="${reports.simian.report}"/>
+
+        <mkdir dir="${docs.javadoc}"/>
+
+        <mkdir dir="${artifact.package.path}"/>
+        <mkdir dir="${artifact.flat.path}"/>        
+    </target>
+
+    <target name="compile" depends="init" description="Compile source code">
+      <javac
+          srcdir            = "${build.production.src}"
+          destdir           = "${build.production.classes}"
+          source            = "${build.source.level}"
+          debug             = "true"
+          debuglevel        = "${build.debug.level}"
+          includeantruntime = "false"
+          encoding          = "UTF-8"
+          fork              = "true"
+          target            = "${build.target.level}">
+        <compilerarg value="-J-Duser.language=en"/>
+        <include name="**/*.java"/>
+        <exclude name="**/${build.production.src.exclude}"/>
+        <classpath>
+          <path refid = "production.compile.classpath"/>
+        </classpath>
+      </javac>
+    </target>
+
+    <target name="cc.enable">
+        <clover-setup enabled="true"/>
+    </target>
+
+    <target name="cc.disable">
+        <clover-setup enabled="false"/>
+    </target>
+
+    <target name="junit.compile" depends="compile"
+            description="Compile unit test source code">
+        <javac
+            srcdir            = "${build.test.java.src}"
+            destdir           = "${build.test.classes}"
+            source            = "${build.source.level}"
+            debug             = "true"
+            debuglevel        = "${build.debug.level}"
+            includeantruntime = "false"
+            encoding          = "UTF-8"
+            fork              = "true"
+            target            = "${build.target.level}">
+            <compilerarg value="-J-Duser.language=en"/>
+            <include name="**/*.java"/>
+            <classpath>
+                <path refid = "test.compile.classpath"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="junit.run.all" depends="junit.compile"
+            description="Run unit tests">
+        <tstamp/>
+        <copy todir="${build.test.classes}">
+            <fileset dir="${build.test.java.data}">
+                <exclude name="**/*/*swp*"/>
+            </fileset>
+        </copy>
+        <replace dir = "${build.test.classes}">
+            <include name="**/*.xml"/>
+            <replacefilter token="@timestamp@" value="${DSTAMP}${TSTAMP}"/>
+        </replace>
+        <!--
+        It is important to set fork="true" because of the way Cobertura works. 
+        It only flushes its changes to the coverage data file to disk when the 
+        JVM exits. If JUnit runs in the same JVM as ant, then the coverage data 
+        file will be updated AFTER ant exits, but you want to run cobertura-report 
+        BEFORE ant exits.
+        -->
+        <junit printsummary      = "true"
+                   forkmode      = "perBatch"
+                   fork          = "true"
+                   haltonfailure = "true"
+                   maxmemory     = "2048M">
+            <classpath>
+                <path refid="test.run.classpath"/>
+            </classpath>
+            <formatter type="xml"/>
+            <formatter type="brief" usefile="false"/>
+            <batchtest fork="yes"   todir="${reports.ut.java.data}">
+                <fileset dir="${build.test.classes}">
+                    <include name = "**/*Test*.class"/>
+                    <exclude name = "**/AllTests.class"/>
+                    <exclude name = "**/*$__CLR*"/>
+                    <exclude name= "**/*$*.class"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="junit.run.one" depends="junit.compile" description="Run a specify test(-Dtest=xxx)">
+        <property name="test" value="${test}"/>
+        <junit printsummary  = "false"
+               forkmode      = "perBatch"
+               fork          = "true"
+               haltonfailure = "false"
+               maxmemory     = "256M">
+            <classpath>
+                <path refid="test.run.classpath"/>
+            </classpath>
+            <formatter type="xml"/>
+            <formatter type="brief" usefile="false"/>
+            <test name="${test}" todir="${reports.ut.java.data}"/>
+        </junit>
+    </target>
+
+    <target name="junit.report" depends="junit.run.all"
+            description="Generate unit test report in xml and html format">
+        <junitreport todir="${reports.ut.java.report}">
+            <fileset dir="${reports.ut.java.data}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${reports.ut.java.report}"/>
+        </junitreport>
+    </target>
+
+    <target name="cc.report" depends="cc.enable, junit.run.all"
+            description="Generate unit test code coverage report">
+        <clover-report>
+            <current outfile="${reports.coverage.java.file.name}">
+                <format type="xml"/>
+            </current>
+          </clover-report>
+        <clover-html-report outdir="${reports.coverage.java.report}"/>
+    </target>
+
+    <target name="cc.open" depends="cc.report">
+        <exec executable="open">
+            <arg line="${reports.coverage.java.report}/index.html"/>
+        </exec>
+    </target>
+
+    <target name="findbugs" depends="compile"
+            description="Generate findbugs report">
+        <findbugs home="${findbugs.home}"
+            output="html"
+            outputFile="${reports.findbugs.report}/index.htm" >
+            <systemProperty name = "findbugs.home"
+                           value = "${findbugs.home}"/>
+            <auxClasspath>
+                <path refid = "production.compile.classpath"/>
+            </auxClasspath>
+            <sourcePath path = "${build.production.src}"/>
+            <class  location = "${build.production.classes}"/>
+        </findbugs>
+    </target>
+
+    <!-- As of PMD 5.2.0 use ant -lib tools/pmd/lib pmd to run pmd, github #Issue 2-->
+    <target name="pmd" description="Generate PMD report" depends="init">
+        <pmd shortFilenames = "false"
+             encoding       = "UTF-8">
+            <sourceLanguage name="java" version="${build.source.level}"/>
+            <ruleset>java-basic</ruleset>
+            <formatter type   = "xml"
+                       toFile = "${reports.pmd.data}/${report.pmd.file.name}.xml"/>
+            <formatter type   = "html"
+                       toFile = "${reports.pmd.report}/${report.pmd.file.name}.html"/>
+            <fileset dir="${build.production.src}">
+                <include name="**/*.java"/>
+            </fileset>
+        </pmd>
+    </target>
+
+    <target name="simian" description="Generate simian report for duplicate code scan" depends="init">
+        <simian language="java" threshold="3">
+            <fileset dir="${build.production.src}" includes="**/*.java"/>
+            <formatter type="xml" toFile="${reports.simian.data}/${reports.simian.file.name}.xml"/>
+        </simian>
+        <xslt in="${reports.simian.data}/${reports.simian.file.name}.xml"
+              out="${reports.simian.report}/${reports.simian.file.name}.html"
+              style="${simian.home}/simian.xsl"/>
+    </target>
+
+    <target name="sonar" depends="cc.report">
+        <antcall target="clean.classes"/>
+        <clover-setup enabled="false"/>
+        <antcall target="compile"/>
+        <antcall target="junit.compile"/>
+        <sonar:sonar xmlns:sonar="antlib:org.sonar.ant"/>
+    </target>
+
+    <target name="reportall" depends="findbugs,pmd,simian,sonar,cc.report,javascript.test"
+            description="Generate code coverage, unit test, findbugs and PMD report"/>
+
+    <target name="docs.javadoc" description="Generate java doc">
+        <echo>Generating java doc</echo>
+        <javadoc
+            destdir     = "${docs.javadoc}"
+            author      = "true"
+            version     = "true"
+            use         = "true"
+            failonerror = "false"
+            encoding    = "UTF-8"
+            locale      = "en_US"
+            docencoding = "UTF-8">
+            <fileset dir="${build.production.src}" defaultexcludes="yes">
+                <include name="**"/>
+            </fileset>
+        </javadoc>
+    </target>
+
+    <target name="tags" description="Generate tag file for ctags and cscope">
+        <exec executable="ctags">
+            <arg line="--recurse=yes"/>
+            <arg line="--links=yes"/>
+            <arg line="--java-types=cimp"/>
+            <arg line="--fields=+iaS"/>
+            <arg line="--totals=yes"/>
+            <arg line="./src"/>
+            <arg line="./test/src"/>
+        </exec>
+        <exec executable="find" output="cscope.files">
+            <arg line="."/>
+            <arg line="-name"/>
+            <arg line="'*.java'"/>
+        </exec>
+        <exec executable="cscope">
+            <arg line=" -b -q -i cscope.files"/>
+        </exec>
+    </target>
+
+    <target name="run" depends="compile" description="Run class, full class name(xxx) passed by parameter c(-Dc=xxx)">
+        <java classname="${c}">
+            <classpath>
+                <path refid="production.run.classpath"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="javascript.test" depends="init" description="Run javascript unit test">
+        <exec executable="npm" dir="${work}">
+            <arg line="install"/>
+        </exec>
+        <exec executable="npm" dir="${work}">
+            <arg line="test"/>
+        </exec>
+    </target>
+
+    <target name="build.flat" depends="cc.disable, compile">
+        <copy todir="${artifact.flat.path}">
+            <fileset dir="${build.webcontent.path}">
+                <!-- Files in WEB-INF/lib will be copied separately in next statement-->
+                <exclude name="WEB-INF/lib/**/*"/>
+                <exclude name="**/*/*swp*"/>
+                <exclude name="**/*/*.bak"/>
+            </fileset>
+        </copy>
+        <copy todir="${artifact.flat.path}/WEB-INF/lib" flatten="true">
+            <fileset dir="${build.webcontent.path.lib}">
+                <include name="**/*.jar"/>
+            </fileset>
+        </copy>
+        <copy todir="${artifact.flat.path}/WEB-INF/classes">
+            <fileset dir="${build.production.classes}"/>
+        </copy>
+    </target>
+    
+    <target name="build.war" depends="build.flat" description="Generate war package for web app">
+        <zip destfile="${artifact.package.path}/${assemble.package.name}_${assemble.package.version}.${assemble.package.suffix}">
+            <fileset dir="${artifact.flat.path}"/>
+        </zip>
+        <copy todir="${artifact.package.path}">
+            <fileset dir="${manifest.file.path}">
+                <include name="${manifest.file.name}"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="server.start" depends="build.flat" description="Start Application server">
+        <antcall target="_server.internal.cmd">
+            <param name="cmd" value="${application.server.start.cmd}"/>
+            <param name="cmd.param" value="start"/>
+        </antcall>
+    </target>
+
+    <target name="server.debug" depends="build.flat" description="Start Application server in debug mode">
+        <antcall target="_server.internal.cmd">
+            <param name="cmd" value="${application.server.start.cmd}"/>
+            <param name="cmd.param" value="debug"/>
+        </antcall>
+    </target>
+
+    <target name="server.stop" description="Stop Application server">
+        <antcall target="_server.internal.cmd">
+            <param name="cmd" value="${application.server.stop.cmd}"/>
+            <param name="cmd.param" value="stop"/>
+        </antcall>
+    </target>
+
+    <target name="server.status" description="Show Application server status">
+        <antcall target="_server.internal.cmd">
+            <param name="cmd" value="${application.server.status.cmd}"/>
+            <param name="cmd.param" value="status"/>
+        </antcall>
+    </target>
+
+    <target name="_server.internal.cmd">
+        <exec executable="bash" vmlauncher="false">
+            <env value="${application.server.debug.port}" key="WLP_DEBUG_ADDRESS"/>
+            <arg value="${cmd}"/>
+            <arg value="${cmd.param}"/>
+            <arg value="${application.server.name}"/>
+        </exec>
+    </target>
+
+    <target name="server.restart" description="Restart Application Server">
+        <antcall target="server.stop"/>
+        <antcall target="server.start"/>
+    </target>
+
+    <target name="clean" description="Clean everything in target folder">
+        <delete dir="${target}"/>
+        <delete dir=".sonar"/>
+        <delete dir=".clover"/>
+    </target>
+
+    <target name="clean.classes" description="Clean everything in target classes folder">
+        <delete dir="${build.classes}"/>
+    </target>
+</project>
